@@ -102,6 +102,8 @@ function add_packages_and_repository ()
         #bo: adding package
         _echo_if_be_verbose "     Addiing package >>git<<."
         echo "git" >> ${PATH_TO_THE_PACKAGES_FILE}
+        _echo_if_be_verbose "     Addiing package >>ansible<<."
+        echo "ansible" >> ${PATH_TO_THE_PACKAGES_FILE}
 
         if [[ ${USE_DKMS} -eq 1 ]];
         then
