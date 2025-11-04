@@ -38,6 +38,16 @@ function remove_files ()
     fi
     #bo: variable
 
+    if [[ -d "${PATH_TO_THE_ARCHLIVE_ROOT_USER}/document" ]];
+    then
+      rm -fr "${PATH_TO_THE_ARCHLIVE_ROOT_USER}/document"
+    fi
+
+    if [[ ! -d "${PATH_TO_THE_ARCHLIVE_ROOT_USER}/software" ]];
+    then
+      rm -fr "${PATH_TO_THE_ARCHLIVE_ROOT_USER}/document"
+    fi
+
     rm -fr "${PATH_TO_THE_ARCHLIVE_ROOT}/var/lib/pacman/local/*"
     rm -fr "${PATH_TO_THE_ARCHLIVE_ROOT}/var/lib/pacman/sync/*"
     rm -fr "${PATH_TO_THE_ARCHLIVE_ROOT}/var/log/*.log"
@@ -47,9 +57,9 @@ function remove_files ()
 ####
 # @param <string: PATH_TO_THE_ARCHLIVE_ROOT_USER> - this is not >>/<< but >>/root<<
 ####
-function add_files ()
+function add_files_and_create_directories ()
 {
-    _echo_if_be_verbose ":: Starting adding files"
+    _echo_if_be_verbose ":: Starting adding files and creating directories"
 
     #bo: variable
     local PATH_TO_THE_ARCHLIVE_ROOT_USER
@@ -395,11 +405,10 @@ function build_archiso ()
     #eo: variable
 
     #bo: argument validation
-    _exit_if_string_is_empty "PATH_TO_THE_WORK_DIRECTORY" "${PATH_TO_THE_WORK_DIRECTORY}"
-    _exit_if_string_is_empty "PATH_TO_THE_WORK_DIRECTORY" "${PATH_TO_THE_WORK_DIRECTORY}"
-    _exit_if_string_is_empty "PATH_TO_THE_WORK_DIRECTORY" "${PATH_TO_THE_WORK_DIRECTORY}"
-    _exit_if_string_is_empty "PATH_TO_THE_PROFILE_DIRECTORY" "${PATH_TO_THE_WORK_DIRECTORY}"
     _exit_if_string_is_empty "ISO_FILE_PATH" "${ISO_FILE_PATH}"
+    _exit_if_string_is_empty "PATH_TO_THE_PROFILE_DIRECTORY" "${PATH_TO_THE_WORK_DIRECTORY}"
+    _exit_if_string_is_empty "PATH_TO_THE_OUTPUT_DIRECTORY" "${PATH_TO_THE_OUTPUT_DIRECTORY}"
+    _exit_if_string_is_empty "PATH_TO_THE_WORK_DIRECTORY" "${PATH_TO_THE_WORK_DIRECTORY}"
     _exit_if_string_is_empty "SHA512_FILE_PATH" "${SHA512_FILE_PATH}"
     #eo: argument validation
 
@@ -1116,6 +1125,15 @@ function _main ()
                 ;;
         esac
     done
+
+    #we are calling this here to display the help as soon as possible without the need to call sudo
+    if [[ ${SHOW_HELP} -eq 1 ]];
+    then
+        echo ":: Usage"
+        echo "   ${0} [-d|--dry-run] [-f|--force] [-g|--git-package] [-h|--help] [-k|--kernel <string: linux-lts>] [-r|--repo-index [<string: last|week|month|yyyy/mm/dd>]] [-u|--use-dkms] [-v|--verbose]"
+
+        exit 0
+    fi
     #eo: user input
 
     #begin of variables declaration
@@ -1138,16 +1156,6 @@ function _main ()
     #end of variables declaration
 
     #bo: code
-    if [[ ${SHOW_HELP} -eq 1 ]];
-    then
-        echo ":: Usage"
-        echo "   ${0} [-d|--dry-run] [-f|--force] [-g|--git-package] [-h|--help] [-k|--kernel <string: linux-lts>] [-r|--repo-index [<string: last|week|month|yyyy/mm/dd>]] [-u|--use-dkms] [-v|--verbose]"
-
-        exit 0
-    fi
-
-    #we are calling this here to display the help as soon as possible without the need to call sudo
-
     if [[ ${BE_VERBOSE} -eq 1 ]];
     then
       GIT_CURL_VERBOSE=1
@@ -1170,7 +1178,7 @@ function _main ()
         add_packages_and_repository "${PATH_TO_THE_PROFILE_DIRECTORY}" "${REPO_INDEX}"
     fi
 
-    add_files "${PATH_TO_THE_PROFILE_DIRECTORY}/airootfs/root"
+    add_files_and_create_directories "${PATH_TO_THE_PROFILE_DIRECTORY}/airootfs/root"
 
     if [[ ${KERNEL} != 'linux' ]];
     then
@@ -1192,10 +1200,10 @@ function _main ()
       PATH_TO_SYSLINUX="${PATH_TO_THE_PROFILE_DIRECTORY}/syslinux"
 
       # bo: efiboot adaptation
-      sed -i "s/vmlinuz-linux/vmlinuz-${KERNEL}/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/01-archiso-x86_64-linux.conf
-      sed -i "s/initramfs-linux.img/initramfs-${KERNEL}.img/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/01-archiso-x86_64-linux.conf
-      sed -i "s/vmlinuz-linux/vmlinuz-${KERNEL}/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/02-archiso-x86_64-speech-linux.conf
-      sed -i "s/initramfs-linux.img/initramfs-${KERNEL}.img/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/02-archiso-x86_64-speech-linux.conf
+      sed -i "s/vmlinuz-linux/vmlinuz-${KERNEL}/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/01-archiso-linux.conf
+      sed -i "s/initramfs-linux.img/initramfs-${KERNEL}.img/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/01-archiso-linux.conf
+      sed -i "s/vmlinuz-linux/vmlinuz-${KERNEL}/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/02-archiso-speech-linux.conf
+      sed -i "s/initramfs-linux.img/initramfs-${KERNEL}.img/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/03-archiso-memtest86+x64.conf
       # 03-* does not exist
       #sed -i "s/vmlinuz-linux/vmlinuz-${KERNEL}/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/03-archiso-x86_64-ram-linux.conf
       #sed -i "s/initramfs-linux.img/initramfs-${KERNEL}.img/" "${PATH_TO_EFIBOOT_LOADER_ENTRIES}"/03-archiso-x86_64-ram-linux.conf
@@ -1224,6 +1232,7 @@ function _main ()
     # bo: profiledef adaptation
     local PATH_TO_PROFILEDEF
 
+    # ref: /usr/share/doc/archiso/README.profile.rst
     PATH_TO_PROFILEDEF="${PATH_TO_THE_PROFILE_DIRECTORY}/profiledef.sh"
     sed -i "s/iso_name=\"archlinux\"/iso_name=\"${BUILD_FILE_NAME}\"/" "${PATH_TO_PROFILEDEF}"
     # eo: profiledef adaptation
