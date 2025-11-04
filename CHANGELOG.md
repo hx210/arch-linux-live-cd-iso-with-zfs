@@ -58,6 +58,27 @@ git log ${TAG_CREATED_FROM}..HEAD | grep '^   ' | trim
 
 ### Changed in unreleased
 
+## [3.2.0](https://github.com/stevleibelt/arch-linux-live-cd-iso-with-zfs/tree/3.2.0) - 20251104
+
+### Added in 3.2.0
+
+* Add cleanup for all archlinux based images or containers filtered by label
+* Add cleanup of document and software to prevent git issus
+* Add filter for docker prune with until-two-weeks-ago
+* Add `last_build*` to .gitignore
+* Add podman option to readme
+* Add support for `.env*` files and -h|--help
+* Add support for building with podman instead of docker
+
+### Changed in 3.2.0
+
+* Fix `creation_date_time` detection in `upload_iso`
+* Fix invalid longoption for dryrun
+* Fix missing then after if
+* Migrate to upload-artifact@v4
+* Replace invalid else with elif
+* Remove duplicated `_exist_if_string_is_empty` function
+* Update actions/checkout from v4 to v5
 
 ## [3.1.0](https://github.com/stevleibelt/arch-linux-live-cd-iso-with-zfs/tree/3.1.0) - 20250207
 
