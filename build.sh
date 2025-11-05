@@ -267,74 +267,75 @@ function add_packages_and_repository ()
       local PACKAGE_TO_REMOVE_ARRAY
       local PACKAGE_TO_ADD_ARRAY
 
-        _echo_if_be_verbose "   Creating archzfs mirrorlist file >>${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}<<."
+      _echo_if_be_verbose "   Creating archzfs mirrorlist file >>${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}<<."
 
-        #bo: adding repository
-        echo "Server = http://archzfs.com/\$repo/\$arch" >> "${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}"
-        echo "Server = http://mirror.sum7.eu/archlinux/archzfs/\$repo/\$arch" >> "${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}"
-        echo "Server = https://mirror.biocrafting.net/archlinux/archzfs/\$repo/\$arch" >> "${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}"
+      #bo: adding repository
+      echo "Server = http://archzfs.com/\$repo/\$arch" >> "${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}"
+      echo "Server = http://mirror.sum7.eu/archlinux/archzfs/\$repo/\$arch" >> "${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}"
+      echo "Server = https://mirror.biocrafting.net/archlinux/archzfs/\$repo/\$arch" >> "${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}"
 
-        _echo_if_be_verbose "   Adding archzfs repositories to PATH_TO_THE_PACMAN_CONF_FILE >>${PATH_TO_THE_PACMAN_CONF_FILE}<<."
+      _echo_if_be_verbose "   Adding archzfs repositories to PATH_TO_THE_PACMAN_CONF_FILE >>${PATH_TO_THE_PACMAN_CONF_FILE}<<."
 
-        echo "" >> ${PATH_TO_THE_PACMAN_CONF_FILE}
-        echo "[archzfs]" >> ${PATH_TO_THE_PACMAN_CONF_FILE}
-        echo "Include = ${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}" >> ${PATH_TO_THE_PACMAN_CONF_FILE}
-        #eo: adding repository
+      echo "" >> ${PATH_TO_THE_PACMAN_CONF_FILE}
+      echo "[archzfs]" >> ${PATH_TO_THE_PACMAN_CONF_FILE}
+      echo "Include = ${PATH_TO_THE_PACMAN_D_ARCHZFS_FILE}" >> ${PATH_TO_THE_PACMAN_CONF_FILE}
+      #eo: adding repository
 
-        #bo: removing package
-        IFS=',' read -r -a PACKAGE_TO_REMOVE_ARRAY <<< "${PACKAGES_TO_REMOVE}"
+      #bo: removing package
+      IFS=',' read -r -a PACKAGE_TO_REMOVE_ARRAY <<< "${PACKAGES_TO_REMOVE}"
 
-        for PACKAGE_NAME in "${PACKAGE_TO_REMOVE_ARRAY[@]}";
-        do
-          _echo_if_be_verbose "     Removing package >>${PACKAGE_NAME}<<."
-          sed -i "/${PACKAGE_NAME}/d" "${PATH_TO_THE_PACKAGES_FILE}"
-        done;
-        #eo: removing package
+      for PACKAGE_NAME in "${PACKAGE_TO_REMOVE_ARRAY[@]}";
+      do
+        _echo_if_be_verbose "     Removing package >>${PACKAGE_NAME}<<."
+        sed -i "/${PACKAGE_NAME}/d" "${PATH_TO_THE_PACKAGES_FILE}"
+      done;
+      #eo: removing package
 
-        #bo: adding package
-        _echo_if_be_verbose "   Adding packages."
+      #bo: adding package
+      _echo_if_be_verbose "   Adding packages."
 
-        IFS=',' read -r -a PACKAGE_TO_ADD_ARRAY <<< "${PACKAGES_TO_ADD}"
+      IFS=',' read -r -a PACKAGE_TO_ADD_ARRAY <<< "${PACKAGES_TO_ADD}"
 
-        for PACKAGE_NAME in "${PACKAGE_TO_ADD_ARRAY[@]}";
-        do
-          _echo_if_be_verbose "     Adding package >>${PACKAGE_NAME}<<."
-          echo "${PACKAGE_NAME}" >> "${PATH_TO_THE_PACKAGES_FILE}"
-        done
+      for PACKAGE_NAME in "${PACKAGE_TO_ADD_ARRAY[@]}";
+      do
+        _echo_if_be_verbose "     Adding package >>${PACKAGE_NAME}<<."
+        echo "${PACKAGE_NAME}" >> "${PATH_TO_THE_PACKAGES_FILE}"
+      done
 
-        if [[ ${USE_DKMS} -eq 1 ]];
+      if [[ ${USE_DKMS} -eq 1 ]];
+      then
+        if [[ ${KERNEL} != 'linux' ]];
         then
-          if [[ ${KERNEL} != 'linux' ]];
-          then
-            sed -i -e "s/^linux$/${KERNEL}/" "${PATH_TO_THE_PACKAGES_FILE}"
-          fi
-          _echo_if_be_verbose "     Adding package >>${KERNEL}-headers<<."
-          echo "${KERNEL}-headers" >> "${PATH_TO_THE_PACKAGES_FILE}"
-
-          if [[ ${USE_GIT_PACKAGE} -eq 0 ]];
-          then
-            _echo_if_be_verbose "     Adding package >>zfs-dkms<<."
-            echo "zfs-dkms" >> "${PATH_TO_THE_PACKAGES_FILE}"
-          else
-            _echo_if_be_verbose "     Adding package >>zfs-dkms-git<<."
-            echo "zfs-dkms-git" >> "${PATH_TO_THE_PACKAGES_FILE}"
-          fi
-        else
-          if [[ ${USE_GIT_PACKAGE} -eq 0 ]];
-          then
-            _echo_if_be_verbose "     Adding package >>zfs-${KERNEL}<<."
-            echo "zfs-${KERNEL}" >> "${PATH_TO_THE_PACKAGES_FILE}"
-            _echo_if_be_verbose "     Adding package >>zfs-utils<<."
-            echo "zfs-utils" >> "${PATH_TO_THE_PACKAGES_FILE}"
-          else
-            _echo_if_be_verbose "     Adding package >>zfs-${KERNEL}-git<<."
-            echo "zfs-${KERNEL}-git" >> "${PATH_TO_THE_PACKAGES_FILE}"
-            _echo_if_be_verbose "     Adding package >>zfs-utils-git<<."
-            echo "zfs-utils-git" >> "${PATH_TO_THE_PACKAGES_FILE}"
-          fi
+          sed -i -e "s/^linux$/${KERNEL}/" "${PATH_TO_THE_PACKAGES_FILE}"
         fi
-        #eo: adding package
-        echo ":: Finished adding packages and repository"
+        _echo_if_be_verbose "     Adding package >>${KERNEL}-headers<<."
+        echo "${KERNEL}-headers" >> "${PATH_TO_THE_PACKAGES_FILE}"
+
+        if [[ ${USE_GIT_PACKAGE} -eq 0 ]];
+        then
+          _echo_if_be_verbose "     Adding package >>zfs-dkms<<."
+          echo "zfs-dkms" >> "${PATH_TO_THE_PACKAGES_FILE}"
+        else
+          _echo_if_be_verbose "     Adding package >>zfs-dkms-git<<."
+          echo "zfs-dkms-git" >> "${PATH_TO_THE_PACKAGES_FILE}"
+        fi
+      else
+        if [[ ${USE_GIT_PACKAGE} -eq 0 ]];
+        then
+          _echo_if_be_verbose "     Adding package >>zfs-${KERNEL}<<."
+          # zfs-linux or zfs-linux-lts
+          echo "zfs-${KERNEL}" >> "${PATH_TO_THE_PACKAGES_FILE}"
+          _echo_if_be_verbose "     Adding package >>zfs-utils<<."
+          echo "zfs-utils" >> "${PATH_TO_THE_PACKAGES_FILE}"
+        else
+          _echo_if_be_verbose "     Adding package >>zfs-${KERNEL}-git<<."
+          echo "zfs-${KERNEL}-git" >> "${PATH_TO_THE_PACKAGES_FILE}"
+          _echo_if_be_verbose "     Adding package >>zfs-utils-git<<."
+          echo "zfs-utils-git" >> "${PATH_TO_THE_PACKAGES_FILE}"
+        fi
+      fi
+      #eo: adding package
+      echo ":: Finished adding packages and repository"
     fi
 }
 
@@ -435,6 +436,10 @@ function build_archiso ()
     #begin of building
     if [[ ${IS_DRY_RUN} -ne 1 ]];
     then
+      # -o: set the output directory
+      # -r: delete the working directory at the end
+      # -v: enable verbose output
+      # -w: set the working directory
       if [[ ${BE_VERBOSE} -gt 0 ]];
       then
         mkarchiso -v -w ${PATH_TO_THE_WORK_DIRECTORY} -o ${PATH_TO_THE_OUTPUT_DIRECTORY} ${PATH_TO_THE_PROFILE_DIRECTORY}
